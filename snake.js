@@ -1,5 +1,8 @@
 'use strict';
 const h1 = document.getElementById('h1');
+const music = document.getElementById('bg-music');
+const crunchSound = document.getElementById('crunch-sound');
+const gameOverSound = document.getElementById('gameover-sound');
 const canvas = document.querySelector('canvas');
 const arrowsContainer = document.querySelector('.arrows-container');
 const arrowBtns = Array.from(document.getElementsByClassName('arrow'));
@@ -39,6 +42,7 @@ let direction = '';
 const velocity = { x: 0, y: 0 }
 let score = 0;
 const gracePeriod = 150; // before collision
+let gameStarted = false;
 let gameOver = false;
 let modalClosed = false;
 let drawInterval;
@@ -90,6 +94,8 @@ function changeDirection(e)
         velocity.y = -blockSize;
         removeClassActive();
         addClassActive(up);
+        if (!gameStarted) gameStarted = true;
+
       }
       break;
     
@@ -101,6 +107,8 @@ function changeDirection(e)
         velocity.y = 0;
         removeClassActive();
         addClassActive(right);
+        if (!gameStarted) gameStarted = true;
+
       }
       break;
     
@@ -112,6 +120,8 @@ function changeDirection(e)
         velocity.y = blockSize;
         removeClassActive();
         addClassActive(down);
+        if (!gameStarted) gameStarted = true;
+
       }
       break;
       
@@ -123,6 +133,8 @@ function changeDirection(e)
         velocity.y = 0;
         removeClassActive();
         addClassActive(left);
+        if (!gameStarted) gameStarted = true;
+
       }
       break;
   }
@@ -152,6 +164,32 @@ function addClassActive(btn)
   if (direction) btn.classList.add('active');
 }
 
+function playMusic()
+{
+ music.play();
+}
+
+function pauseMusic() {
+  music.pause();
+}
+
+function playSoundEffect(e)
+{
+  if (e === 'gameover')
+  {
+    gameOverSound.play();
+  }
+  else if (e === 'crunch')
+  {
+    crunchSound.play();
+  }
+}
+
+function resetAudio(audio)
+{
+  audio.currentTime = 0;
+}
+
 function update()
 {
   // Update body
@@ -165,7 +203,10 @@ function update()
     // first body segment is set to old head
     snake.body[0] = { ...snake.head};
   }
-  
+
+  if (gameStarted) playMusic();
+
+
   switch (direction) 
   {
     case 'up':
@@ -234,6 +275,8 @@ function checkCollision()
   // Food collision
   if (snake.head.x === food.x && snake.head.y === food.y) 
   {
+    playSoundEffect('crunch');
+    resetAudio(crunchSound);
     snake.body.push({x: food.x, y: food.y});
     drawFood();
     updateScore();
@@ -305,6 +348,7 @@ function resetGame()
   direction = '';
   [velocity.x, velocity.y] = [0];
   score = 0;
+  gameStarted = false;
   gameOver = false;
   modalClosed = false;
   h1.innerHTML = 'Score: <span id="score">0';
@@ -320,11 +364,14 @@ function resetGame()
 function endGame()
 {
   clearInterval(drawInterval);
-  openModal();
+  pauseMusic();
+  resetAudio(music);
+  playSoundEffect('gameover');
+  setTimeout(openModal, 3000);
   removeEvents();
   removeClassActive();
   h1.textContent = 'Game over!';
-  h1.style.cssText = 'animation: change-color 1s infinite alternate; text-shadow: 0 0 30px #ff0000;';
+  h1.style.cssText = 'animation: change-color .9s infinite alternate; text-shadow: 0 0 30px #ff0000;';
 }
 
 main();
